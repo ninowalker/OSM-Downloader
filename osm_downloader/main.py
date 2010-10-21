@@ -16,8 +16,8 @@ def main():
                       dest="dir", default=".",
                       help="download directory", metavar="DIR")
     parser.add_option("-a", "--max_age",
-                      type="int", dest="max_age", default=60*24*7,
-                      help="max age of the file", metavar="DIR")
+                      type="int", dest="max_age", default=60*60*24*7,
+                      help="max age of the file in seconds; default 1 week")
     parser.add_option("-c", "--center",
                       dest="center",
                       help="center point")
