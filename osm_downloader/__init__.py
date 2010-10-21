@@ -32,29 +32,25 @@ class Tile(object):
 
     @property
     def url(self):
+        #print "http://api.openstreetmap.org/api/0.6/map?bbox=%f,%f,%f,%f" % self.bounds
         return "http://api.openstreetmap.org/api/0.6/map?bbox=%f,%f,%f,%f" % self.bounds
 
 class Region(object):
-    def __init__(self, bounds, step=0.04, overlap=0.001, name=None):
+    def __init__(self, bounds):
         self.bounds = bounds
-        if not name:
-            name = datetime.datetime.now().strftime("%Y-%m-%d_%H%M")
-        self.name = name
-        self.step = step
-        self.overlap = overlap
 
-    def tiles(self):
-        minx = self.step * math.floor( self.left / self.step )
-        maxx = self.step * math.ceil( self.right / self.step )
-        miny = self.step * math.floor( self.bottom / self.step )
-        maxy = self.step * math.ceil( self.top / self.step )
+    def tiles(self, step=0.04, overlap=0.001):
+        minx = step * math.floor( self.left / step )
+        maxx = step * math.ceil( self.right / step )
+        miny = step * math.floor( self.bottom / step )
+        maxy = step * math.ceil( self.top / step )
 
-        for x in frange(miny, maxy, self.step):
-            for y in frange(minx, maxx, self.step):
-                yield Tile(x - self.overlap,
-                           y - self.overlap,
-                           x + self.overlap + self.step,
-                           y + self.overlap + self.step)
+        for y in frange(miny, maxy, step):
+            for x in frange(minx, maxx, step):
+                yield Tile(x - overlap,
+                           y - overlap,
+                           x + overlap + step,
+                           y + overlap + step)
         
     @property
     def left(self): return self.bounds[0]
@@ -69,12 +65,14 @@ class Region(object):
     def top(self): return self.bounds[3]
 
 class Downloader(object):
-    def __init__(self, dir, max_age=None):
+    def __init__(self, dir, max_age=None, prefix="osm"):
         self.dir = dir
         self.max_age = max_age
+        self.prefix = prefix
 
-    def download(self, region, callback=None):
-        tiles = list(region.tiles())
+    def download(self, region, step=0.04, overlap=0.001, callback=None):
+        tiles = list(region.tiles(step=step, overlap=overlap))
+        print "Downloading %f,%f to %f,%f (%d tiles)..." % (region.bounds + (len(tiles),))
         pbar = ProgressBar(maxval=len(tiles))
         pbar.start()
         for i,tile in enumerate(tiles):
@@ -86,14 +84,14 @@ class Downloader(object):
         print "Downloads complete"
 
     def _download(self, tile):
-        filename = os.path.join(self.dir, "%f_%f__%f_%f.osm.xml" % tile.bounds)
+        filename = os.path.join(self.dir, (self.prefix + "_%f_%f__%f_%f.osm.xml") % tile.bounds)
         if os.path.exists(filename):
             if not self.max_age:
                 return filename
             if os.stat(filename)[stat.ST_MTIME] + self.max_age > time.time():
                 return filename
         d = urllib.urlopen(tile.url).read()
-        with open(os.path.join(self.dir, filename),"w") as f:
+        with open(filename, "w") as f:
             f.write(d)
         return filename
 
