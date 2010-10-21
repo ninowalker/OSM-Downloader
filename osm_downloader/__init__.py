@@ -3,6 +3,7 @@ import math
 from progressbar import ProgressBar
 import urllib
 import os, stat, time
+import threading
 
 ## {{{ http://code.activestate.com/recipes/66472/ (r1)
 def frange(start, end=None, inc=None):
@@ -70,30 +71,51 @@ class Downloader(object):
         self.max_age = max_age
         self.prefix = prefix
 
-    def download(self, region, step=0.04, overlap=0.001, callback=None):
+    def download(self, region, step=0.04, overlap=0.001, callback=None, threaded=False):
+        threads = set([])
         tiles = list(region.tiles(step=step, overlap=overlap))
         print "Downloading %f,%f to %f,%f (%d tiles)..." % (region.bounds + (len(tiles),))
         pbar = ProgressBar(maxval=len(tiles))
         pbar.start()
         for i,tile in enumerate(tiles):
-            f = self._download(tile)
+            is_new, f = self._download(tile)
             if callback:
-                callback(f)
+                if threaded:
+                    print "Starting callback thread..."
+                    t = threading.Thread(target=callback, args=(is_new, f))
+                    t.daemon = False
+                    t.start()
+                    threads.add(t)
+                else:
+                    callback(is_new, f)
             pbar.update(i+1)
         pbar.finish()
         print "Downloads complete"
+        if not len(threads):
+            return
+        
+        pbar = ProgressBar(maxval=len(threads))
+        pbar.start()
+        print "Waiting for %d threads to complete" % len(threads)
+        i = 0
+        while (len(threads)):
+            t = threads.pop()
+            t.join()
+            pbar.update(i)
+            i += 1
+        pbar.finish()
 
     def _download(self, tile):
         filename = os.path.join(self.dir, (self.prefix + "_%f_%f__%f_%f.osm.xml") % tile.bounds)
         if os.path.exists(filename):
             if not self.max_age:
-                return filename
+                return False, filename
             if os.stat(filename)[stat.ST_MTIME] + self.max_age > time.time():
-                return filename
+                return False, filename
         d = urllib.urlopen(tile.url).read()
         with open(filename, "w") as f:
             f.write(d)
-        return filename
+        return True, filename
 
 if __name__ == '__main__':
     d = Downloader("/tmp", 5)
