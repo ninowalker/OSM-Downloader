@@ -1,0 +1,14 @@
+Install
+-------
+
+sudo python setup.py install
+
+Sample Usage
+------------
+
+# download 0.02 arc degree^2 tiles within ~2000 meters of a center lat/lng
+osm_download -d /path/to/outputdir -c 37.743512,-122.419195 -r 2000 -s 0.02
+
+# download 0.04 (default) arc degree^2 tiles within the lng,lat,lng,lat bounds
+osm_download -d /path/to/outputdir -b 0,0,1,1
+
