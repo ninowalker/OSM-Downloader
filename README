@@ -19,4 +19,4 @@ from osm_downloader import Downloader, Region
 
 d = Downloader("/path/to/outdir", 60*60*24) # max age == 1 day
 r = Region((0,0,1,1))
-d.download(region, step=0.02) # get 0.2 arc degree ^2 tiles.
+d.download(region, step=0.2) # get 0.2 arc degree ^2 tiles.
