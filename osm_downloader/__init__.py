@@ -74,7 +74,7 @@ class Downloader(object):
     def download(self, region, step=0.04, overlap=0.001, callback=None, threaded=False):
         threads = set([])
         tiles = list(region.tiles(step=step, overlap=overlap))
-        print "Downloading %f,%f to %f,%f (%d tiles)..." % (region.bounds + (len(tiles),))
+        print "Downloading %f,%f to %f,%f (%d tiles)..." % (region.bottom, region.left, region.top, region.right, len(tiles))
         pbar = ProgressBar(maxval=len(tiles))
         pbar.start()
         for i,tile in enumerate(tiles):
