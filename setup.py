@@ -2,6 +2,7 @@ from setuptools import setup
 
 setup(name = "osm_downloader",
       version = "0.0.1",
+      install_requires = ['progressbar'],
       description = "A set of tools for downloading OSM files via the API.",
       author = "Nino Walker",
       author_email = "nino.walker@gmail.com",
