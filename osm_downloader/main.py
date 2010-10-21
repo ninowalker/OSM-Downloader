@@ -27,13 +27,6 @@ def main():
     parser.add_option("-r", "--range",
                       dest="range", default=None, type="int",
                       help="the range in meters")
-    parser.add_option("--postprocess",
-                      dest="postprocess", default=None,
-                      help="run a postprocess function")
-    parser.add_option("--not-threaded",
-                      dest="threaded", action="store_false", default=True,
-                      help="don't thread workers")
-
     
     (opts, args) = parser.parse_args()
     
@@ -42,23 +35,6 @@ def main():
         exit(-1)
         
     d = Downloader(opts.dir, opts.max_age)
-
-    callback = None
-    if opts.postprocess:
-        if opts.postprocess == 'osmdb':
-            from graphserver.ext.osm.osmdb import OSMDB
-            def create_osmdb(is_new, filename):
-                try:
-                    osmdb_filename = filename[0:-4] + ".osmdb"
-                    if not is_new and os.path.exists(osmdb_filename):
-                        return
-                    db = OSMDB(osmdb_filename, True)
-                    db.populate(filename)
-                    print "Finished %s" % filename
-                except Exception, e:
-                    print e
-                    raise
-            callback = create_osmdb
 
     step = opts.step
     region = None
@@ -75,7 +51,7 @@ def main():
         parser.print_help()
         exit(-1)
 
-    d.download(region, step=step, callback=callback, threaded=opts.threaded)
+    d.download(region, step=step)
 
     
 if __name__=='__main__':
